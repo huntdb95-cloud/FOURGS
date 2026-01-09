@@ -23,16 +23,33 @@
 }
 
 *{ box-sizing: border-box; }
-html, body { height: 100%; }
+html, body { 
+  height: 100%;
+  min-height: 100vh;
+}
+html{
+  background: var(--bg);
+}
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-  background: radial-gradient(1200px 600px at 10% 0%, rgba(255,255,255,0.08), transparent 60%),
-              radial-gradient(900px 500px at 90% 0%, rgba(255,255,255,0.06), transparent 60%),
-              var(--bg);
+  background: var(--bg);
+  background-image: 
+    radial-gradient(ellipse 1400px 1000px at 10% 0%, rgba(255,255,255,0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 1200px 900px at 90% 0%, rgba(255,255,255,0.06) 0%, transparent 65%);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: top center;
   color: var(--text);
   line-height:1.5;
   overflow-x: hidden;
+}
+
+@media (max-width: 768px){
+  body{
+    background-size: 100% auto;
+    background-position: top;
+  }
 }
 
 img{ max-width: 100%; display:block; }
@@ -63,7 +80,7 @@ h1,h2,h3{ margin: 0.4rem 0 0.6rem; line-height: 1.15; letter-spacing: -0.02em; }
 .site-header{
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 10000;
   backdrop-filter: blur(12px);
   background: rgba(11,13,16,0.6);
   border-bottom: 1px solid var(--line);
@@ -74,7 +91,8 @@ h1,h2,h3{ margin: 0.4rem 0 0.6rem; line-height: 1.15; letter-spacing: -0.02em; }
   align-items:center;
   justify-content:space-between;
   gap: 16px;
-  padding: 10px 0;
+  padding: 14px 0;
+  position: relative;
 }
 
 .brand{ 
@@ -82,12 +100,16 @@ h1,h2,h3{ margin: 0.4rem 0 0.6rem; line-height: 1.15; letter-spacing: -0.02em; }
   align-items:center;
   flex-shrink: 0;
   min-width: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
 }
 .brand-logo{
   display: block;
-  height: 64px;
+  height: 72px;
   width: auto;
-  max-width: 240px;
+  max-width: 280px;
   object-fit: contain;
   flex: 0 0 auto;
   align-self: center;
@@ -98,6 +120,9 @@ h1,h2,h3{ margin: 0.4rem 0 0.6rem; line-height: 1.15; letter-spacing: -0.02em; }
   display:flex;
   align-items:center;
   gap: 10px;
+  margin-left: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .nav-link{
@@ -530,30 +555,53 @@ input:focus, textarea:focus{ box-shadow: var(--focus); }
 
 @media (max-width: 720px){
   .brand-logo{ 
-    height: 48px;
+    height: 56px;
     width: auto;
     max-width: 70vw;
   }
-  .nav-toggle{ display:flex; }
+  .header-inner{
+    padding: 12px 0;
+  }
+  .nav-toggle{ 
+    display:flex;
+    position: absolute;
+    right: 0;
+    z-index: 10;
+  }
 
   .site-nav{
     position: absolute;
-    top: 72px;
+    top: 80px;
     right: var(--pad);
     left: var(--pad);
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
     padding: 12px;
-    background: rgba(11,13,16,0.92);
+    background: rgba(11,13,16,0.95);
     border: 1px solid var(--line);
     border-radius: 16px;
     box-shadow: var(--shadow);
     display:none;
-    z-index: 100;
+    z-index: 9999;
   }
   .site-nav.is-open{ display:flex; }
   .nav-link{ padding: 12px 14px; }
+  
+  /* Ensure map doesn't overlap menu - Leaflet creates its own stacking context */
+  #map, .map{
+    position: relative;
+    z-index: 1;
+  }
+  .leaflet-container{
+    z-index: 1 !important;
+  }
+  .leaflet-pane{
+    z-index: 1 !important;
+  }
+  .leaflet-top, .leaflet-bottom{
+    z-index: 1 !important;
+  }
 
   .cards{ grid-template-columns: 1fr; }
   .gallery-grid{ grid-template-columns: 1fr; }
