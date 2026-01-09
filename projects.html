@@ -55,11 +55,11 @@
           <div class="map-legend">
             <h3>Locations</h3>
             <ul class="legend-list">
-              <li><span class="legend-dot"></span> Franklin, TN</li>
-              <li><span class="legend-dot"></span> Antioch, TN</li>
-              <li><span class="legend-dot"></span> Murfreesboro, TN</li>
-              <li><span class="legend-dot"></span> Nashville, TN</li>
-              <li><span class="legend-dot"></span> Smyrna, TN</li>
+              <li><span class="legend-dot"></span> <a href="project-gallery.html?project=franklin" class="legend-link">Franklin, TN</a></li>
+              <li><span class="legend-dot"></span> <a href="project-gallery.html?project=antioch" class="legend-link">Antioch, TN</a></li>
+              <li><span class="legend-dot"></span> <a href="project-gallery.html?project=murfreesboro" class="legend-link">Murfreesboro, TN</a></li>
+              <li><span class="legend-dot"></span> <a href="project-gallery.html?project=nashville" class="legend-link">Nashville, TN</a></li>
+              <li><span class="legend-dot"></span> <a href="project-gallery.html?project=smyrna" class="legend-link">Smyrna, TN</a></li>
             </ul>
             <p class="muted small">Pins are placeholders—update coordinates and details anytime.</p>
           </div>
@@ -108,17 +108,46 @@
     });
 
     const projects = [
-      { name: "Franklin, TN", coords: [35.9251, -86.8689] },
-      { name: "Antioch, TN", coords: [36.0606, -86.6719] },
-      { name: "Murfreesboro, TN", coords: [35.8456, -86.3903] },
-      { name: "Nashville, TN", coords: [36.1627, -86.7816] },
-      { name: "Smyrna, TN", coords: [35.9828, -86.5186] }
+      { id: "franklin", name: "Franklin, TN", coords: [35.9251, -86.8689] },
+      { id: "antioch", name: "Antioch, TN", coords: [36.0606, -86.6719] },
+      { id: "murfreesboro", name: "Murfreesboro, TN", coords: [35.8456, -86.3903] },
+      { id: "nashville", name: "Nashville, TN", coords: [36.1627, -86.7816] },
+      { id: "smyrna", name: "Smyrna, TN", coords: [35.9828, -86.5186] }
     ];
 
     projects.forEach(p => {
-      L.marker(p.coords, { icon: darkIcon })
+      const galleryUrl = `project-gallery.html?project=${p.id}`;
+      
+      const popupContent = `
+        <div style="text-align: center; padding: 4px; min-width: 140px;">
+          <strong style="display: block; margin-bottom: 8px;">${p.name}</strong>
+          <a href="${galleryUrl}" style="display: inline-block; padding: 8px 14px; background: rgba(233,237,242,0.18); border: 1px solid rgba(233,237,242,0.25); border-radius: 8px; color: #eef2f7; text-decoration: none; font-size: 0.9rem; transition: background 180ms; -webkit-tap-highlight-color: rgba(233,237,242,0.3); cursor: pointer;">View Gallery</a>
+        </div>
+      `;
+
+      const marker = L.marker(p.coords, { icon: darkIcon })
         .addTo(map)
-        .bindPopup(`<strong>${p.name}</strong><br/>Active project (placeholder)`);
+        .bindPopup(popupContent, {
+          closeOnClick: false,
+          autoClose: false,
+          closeButton: true
+        });
+
+      // Navigate on marker click - direct navigation
+      marker.on('click', function(e) {
+        // Navigate directly when marker is clicked
+        window.location.href = galleryUrl;
+      });
+
+      // Show popup on hover for desktop UX (info only, link still works)
+      marker.on('mouseover', function() {
+        marker.openPopup();
+      });
+      
+      // Keep popup open on marker to allow link clicking
+      marker.on('popupopen', function() {
+        // Popup link will navigate via its href attribute
+      });
     });
   </script>
 </body>

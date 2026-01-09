@@ -1,0 +1,152 @@
+(function () {
+  // Project data mapping
+  const projectData = {
+    franklin: {
+      name: "Franklin, TN",
+      images: [
+        "assets/projects/franklin/1.jpg",
+        "assets/projects/franklin/2.jpg",
+        "assets/projects/franklin/3.jpg"
+      ]
+    },
+    antioch: {
+      name: "Antioch, TN",
+      images: [
+        "assets/projects/antioch/1.jpg",
+        "assets/projects/antioch/2.jpg"
+      ]
+    },
+    murfreesboro: {
+      name: "Murfreesboro, TN",
+      images: [
+        "assets/projects/murfreesboro/1.jpg"
+      ]
+    },
+    nashville: {
+      name: "Nashville, TN",
+      images: [
+        "assets/projects/nashville/1.jpg"
+      ]
+    },
+    smyrna: {
+      name: "Smyrna, TN",
+      images: [
+        "assets/projects/smyrna/1.jpg"
+      ]
+    }
+  };
+
+  // Get project ID from URL query parameter
+  function getProjectId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("project");
+  }
+
+  // Validate project ID
+  function isValidProjectId(id) {
+    return id && projectData.hasOwnProperty(id.toLowerCase());
+  }
+
+  // Check if image exists (graceful fallback)
+  function checkImageExists(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = src;
+    });
+  }
+
+  // Filter out non-existent images
+  async function filterExistingImages(imagePaths) {
+    const checks = await Promise.all(
+      imagePaths.map(path => checkImageExists(path))
+    );
+    return imagePaths.filter((path, index) => checks[index]);
+  }
+
+  // Render gallery images
+  async function renderGallery(projectId) {
+    const project = projectData[projectId];
+    if (!project) return;
+
+    const titleEl = document.getElementById("project-title");
+    const subtitleEl = document.getElementById("project-subtitle");
+    const galleryGrid = document.getElementById("gallery-grid");
+    const emptyState = document.getElementById("empty-state");
+
+    // Update page title
+    document.title = `${project.name} | 4G's Services LLC.`;
+    titleEl.textContent = project.name;
+    subtitleEl.textContent = `Project gallery for ${project.name}`;
+
+    // Filter existing images
+    const existingImages = await filterExistingImages(project.images);
+
+    if (existingImages.length === 0) {
+      // Show empty state
+      galleryGrid.style.display = "none";
+      emptyState.style.display = "block";
+      return;
+    }
+
+    // Show gallery, hide empty state
+    emptyState.style.display = "none";
+    galleryGrid.style.display = "grid";
+    galleryGrid.innerHTML = "";
+
+    // Render images
+    existingImages.forEach((src, index) => {
+      const figure = document.createElement("figure");
+      figure.className = "project-gallery-item";
+      
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = `${project.name} - Photo ${index + 1}`;
+      img.loading = "lazy";
+      
+      // Add error handling for images that fail to load after initial check
+      img.onerror = function() {
+        this.style.display = "none";
+      };
+
+      figure.appendChild(img);
+      galleryGrid.appendChild(figure);
+    });
+  }
+
+  // Initialize gallery page
+  function init() {
+    const projectId = getProjectId();
+
+    if (!projectId || !isValidProjectId(projectId)) {
+      // Invalid or missing project ID
+      const titleEl = document.getElementById("project-title");
+      const subtitleEl = document.getElementById("project-subtitle");
+      const galleryGrid = document.getElementById("gallery-grid");
+      const emptyState = document.getElementById("empty-state");
+
+      document.title = "Project Not Found | 4G's Services LLC.";
+      titleEl.textContent = "Project Not Found";
+      subtitleEl.textContent = "The requested project could not be found.";
+      galleryGrid.style.display = "none";
+      emptyState.style.display = "block";
+      emptyState.innerHTML = `
+        <p class="muted">The project you're looking for doesn't exist.</p>
+        <a class="btn btn-primary" href="projects.html" style="margin-top: 16px;">Back to Projects</a>
+      `;
+      return;
+    }
+
+    // Normalize project ID to lowercase
+    const normalizedId = projectId.toLowerCase();
+    renderGallery(normalizedId);
+  }
+
+  // Run on page load
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

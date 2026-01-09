@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Project Gallery | 4G's Services LLC.</title>
+  <meta name="description" content="Project gallery for 4G's Services LLC." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Go to home">
+        <img class="brand-logo" src="assets/logo.png" alt="4G's Services LLC. Home Improvements" />
+      </a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" data-nav>
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="projects.html">Projects</a>
+        <a class="nav-link" href="gallery.html">Gallery</a>
+        <a class="nav-link" href="services.html">Services</a>
+        <a class="nav-link nav-cta" href="contact.html">Contact Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <section class="page-hero">
+      <div class="container">
+        <div class="project-gallery-header">
+          <a class="btn btn-secondary" href="projects.html" style="margin-bottom: 16px;">← Back to Projects</a>
+          <h1 id="project-title">Project Gallery</h1>
+          <p class="muted" id="project-subtitle">Loading project details...</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div id="project-gallery-container">
+          <div id="empty-state" class="empty-state" style="display: none;">
+            <p class="muted">No photos uploaded for this project yet.</p>
+            <a class="btn btn-primary" href="projects.html" style="margin-top: 16px;">Back to Projects</a>
+          </div>
+          <div id="gallery-grid" class="project-gallery-grid"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <img class="footer-logo" src="assets/logo.png" alt="" />
+      <div class="footer-text">
+        <p>Built to help homeowners improve their space with dependable, professional craftsmanship.</p>
+        <p class="muted">© <span id="year"></span> 4G's Services LLC.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script src="project-gallery.js"></script>
+</body>
+</html>
