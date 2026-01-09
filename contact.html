@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contact Us | 4G's Services LLC.</title>
+  <meta name="description" content="Contact 4G's Services LLC. for home improvement and remodeling quotes." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Go to home">
+        <img class="brand-logo" src="assets/logo.png" alt="4G's Services LLC. Home Improvements" />
+      </a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" data-nav>
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="projects.html">Projects</a>
+        <a class="nav-link" href="gallery.html">Gallery</a>
+        <a class="nav-link" href="services.html">Services</a>
+        <a class="nav-link nav-cta is-active" href="contact.html">Contact Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <section class="page-hero">
+      <div class="container">
+        <h1>Contact Us</h1>
+        <p class="muted">Tell us about your project—photos and measurements help.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container split">
+        <div class="info-panel">
+          <h3>Quick Info</h3>
+          <p class="muted">Service Area: Middle Tennessee</p>
+          <ul class="contact-list">
+            <li><strong>Phone:</strong> <span class="muted">Add your number</span></li>
+            <li><strong>Email:</strong> <span class="muted">Add your email</span></li>
+            <li><strong>Hours:</strong> <span class="muted">Mon–Fri, 8am–5pm</span></li>
+          </ul>
+          <p class="small muted">This form is front-end only. Hook it to email, a CRM, or Firebase later.</p>
+        </div>
+
+        <form class="form card" data-contact-form>
+          <div class="form-row">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" autocomplete="name" required />
+          </div>
+
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <div class="form-row">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" />
+          </div>
+
+          <div class="form-row">
+            <label for="message">Project details</label>
+            <textarea id="message" name="message" rows="6" placeholder="What are you looking to do? Timeline? Location?" required></textarea>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Send Message</button>
+          <p class="small muted" data-contact-status aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <img class="footer-logo" src="assets/logo.png" alt="" />
+      <div class="footer-text">
+        <p>Built to help homeowners improve their space with dependable, professional craftsmanship.</p>
+        <p class="muted">© <span id="year"></span> 4G's Services LLC.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
