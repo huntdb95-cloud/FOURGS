@@ -80,10 +80,13 @@ h1,h2,h3{ margin: 0.4rem 0 0.6rem; line-height: 1.15; letter-spacing: -0.02em; }
 .site-header{
   position: sticky;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 10000;
   backdrop-filter: blur(12px);
   background: rgba(11,13,16,0.6);
   border-bottom: 1px solid var(--line);
+  width: 100%;
 }
 
 .header-inner{
@@ -554,24 +557,60 @@ input:focus, textarea:focus{ box-shadow: var(--focus); }
 }
 
 @media (max-width: 720px){
-  .brand-logo{ 
-    height: 56px;
-    width: auto;
-    max-width: 70vw;
+  /* Fix header cut-off - add safe-area support and ensure proper visibility */
+  .site-header{
+    padding-top: max(0px, env(safe-area-inset-top));
+    min-height: calc(64px + max(0px, env(safe-area-inset-top)));
   }
+  
   .header-inner{
-    padding: 12px 0;
+    padding: 12px var(--pad);
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+    overflow: visible;
   }
-  .nav-toggle{ 
-    display:flex;
+  
+  /* Center logo in header */
+  .brand{ 
     position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .brand-logo{ 
+    height: 48px;
+    width: auto;
+    max-width: min(70vw, 200px);
+    display: block;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  
+  /* Menu toggle button on the right */
+  .nav-toggle{ 
+    display: flex;
+    position: relative;
     right: 0;
     z-index: 10;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
+  /* Hide desktop nav on mobile, show mobile dropdown when open */
   .site-nav{
-    position: absolute;
-    top: 80px;
+    display: none !important;
+    position: fixed;
+    top: calc(64px + max(0px, env(safe-area-inset-top)) + 12px);
     right: var(--pad);
     left: var(--pad);
     flex-direction: column;
@@ -579,14 +618,28 @@ input:focus, textarea:focus{ box-shadow: var(--focus); }
     gap: 8px;
     padding: 12px;
     background: rgba(11,13,16,0.95);
+    backdrop-filter: blur(16px);
     border: 1px solid var(--line);
     border-radius: 16px;
     box-shadow: var(--shadow);
-    display:none;
-    z-index: 9999;
+    z-index: 11000;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-left: 0;
   }
-  .site-nav.is-open{ display:flex; }
-  .nav-link{ padding: 12px 14px; }
+  
+  .site-nav.is-open{ 
+    display: flex !important;
+  }
+  
+  .nav-link{ 
+    padding: 12px 14px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    -webkit-tap-highlight-color: rgba(255,255,255,0.1);
+  }
   
   /* Ensure map doesn't overlap menu - Leaflet creates its own stacking context */
   #map, .map{
