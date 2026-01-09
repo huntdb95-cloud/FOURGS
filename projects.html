@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Projects | 4G's Services LLC.</title>
+  <meta name="description" content="Active projects map for 4G's Services LLC." />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Go to home">
+        <img class="brand-logo" src="assets/logo.png" alt="4G's Services LLC. Home Improvements" />
+      </a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" data-nav>
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link is-active" href="projects.html">Projects</a>
+        <a class="nav-link" href="gallery.html">Gallery</a>
+        <a class="nav-link" href="services.html">Services</a>
+        <a class="nav-link nav-cta" href="contact.html">Contact Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <section class="page-hero">
+      <div class="container">
+        <h1>Active Projects</h1>
+        <p class="muted">A quick view of where we’re working right now across Middle Tennessee.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="map-shell">
+          <div id="map" class="map" aria-label="Active projects map"></div>
+
+          <div class="map-legend">
+            <h3>Locations</h3>
+            <ul class="legend-list">
+              <li><span class="legend-dot"></span> Franklin, TN</li>
+              <li><span class="legend-dot"></span> Antioch, TN</li>
+              <li><span class="legend-dot"></span> Murfreesboro, TN</li>
+              <li><span class="legend-dot"></span> Nashville, TN</li>
+              <li><span class="legend-dot"></span> Smyrna, TN</li>
+            </ul>
+            <p class="muted small">Pins are placeholders—update coordinates and details anytime.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <img class="footer-logo" src="assets/logo.png" alt="" />
+      <div class="footer-text">
+        <p>Built to help homeowners improve their space with dependable, professional craftsmanship.</p>
+        <p class="muted">© <span id="year"></span> 4G's Services LLC.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="script.js"></script>
+  <script>
+    // Basic Leaflet init (coordinates are city centers; adjust anytime)
+    const map = L.map('map', { scrollWheelZoom: false }).setView([36.05, -86.78], 9);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Dark pin marker via inline SVG
+    const darkPinSvg = encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24">
+        <path fill="#0b0d10" d="M12 2c-3.314 0-6 2.686-6 6c0 4.5 6 14 6 14s6-9.5 6-14c0-3.314-2.686-6-6-6z"/>
+        <circle cx="12" cy="8" r="2.6" fill="#e9edf2"/>
+      </svg>
+    `);
+
+    const darkIcon = L.icon({
+      iconUrl: `data:image/svg+xml,${darkPinSvg}`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 32],
+      popupAnchor: [0, -28]
+    });
+
+    const projects = [
+      { name: "Franklin, TN", coords: [35.9251, -86.8689] },
+      { name: "Antioch, TN", coords: [36.0606, -86.6719] },
+      { name: "Murfreesboro, TN", coords: [35.8456, -86.3903] },
+      { name: "Nashville, TN", coords: [36.1627, -86.7816] },
+      { name: "Smyrna, TN", coords: [35.9828, -86.5186] }
+    ];
+
+    projects.forEach(p => {
+      L.marker(p.coords, { icon: darkIcon })
+        .addTo(map)
+        .bindPopup(`<strong>${p.name}</strong><br/>Active project (placeholder)`);
+    });
+  </script>
+</body>
+</html>
