@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gallery | 4G's Services LLC.</title>
+  <meta name="description" content="Project gallery for 4G's Services LLC." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Go to home">
+        <img class="brand-logo" src="assets/logo.png" alt="4G's Services LLC. Home Improvements" />
+      </a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" data-nav>
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="projects.html">Projects</a>
+        <a class="nav-link is-active" href="gallery.html">Gallery</a>
+        <a class="nav-link" href="services.html">Services</a>
+        <a class="nav-link nav-cta" href="contact.html">Contact Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <section class="page-hero">
+      <div class="container">
+        <h1>Gallery</h1>
+        <p class="muted">Add photos of your work here—kitchens, bathrooms, flooring, decks, and more.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="gallery-toolbar">
+          <div class="search">
+            <label class="sr-only" for="gallerySearch">Search gallery</label>
+            <input id="gallerySearch" type="search" placeholder="Search (e.g., kitchen, tile, deck)..." data-gallery-search />
+          </div>
+          <div class="chip-row" data-gallery-chips>
+            <button class="chip is-active" type="button" data-filter="all">All</button>
+            <button class="chip" type="button" data-filter="kitchen">Kitchen</button>
+            <button class="chip" type="button" data-filter="bath">Bathroom</button>
+            <button class="chip" type="button" data-filter="flooring">Flooring</button>
+            <button class="chip" type="button" data-filter="outdoor">Outdoor</button>
+          </div>
+        </div>
+
+        <!-- Replace placeholders with your real images -->
+        <div class="gallery-grid" data-gallery-grid>
+          <figure class="gallery-item" data-tags="kitchen remodel">
+            <div class="ph"></div>
+            <figcaption>Kitchen remodel (placeholder)</figcaption>
+          </figure>
+
+          <figure class="gallery-item" data-tags="bath tile shower">
+            <div class="ph"></div>
+            <figcaption>Bathroom tile (placeholder)</figcaption>
+          </figure>
+
+          <figure class="gallery-item" data-tags="flooring lvp trim">
+            <div class="ph"></div>
+            <figcaption>Flooring & trim (placeholder)</figcaption>
+          </figure>
+
+          <figure class="gallery-item" data-tags="outdoor deck">
+            <div class="ph"></div>
+            <figcaption>Outdoor deck (placeholder)</figcaption>
+          </figure>
+
+          <figure class="gallery-item" data-tags="kitchen cabinets">
+            <div class="ph"></div>
+            <figcaption>Cabinets & finish (placeholder)</figcaption>
+          </figure>
+
+          <figure class="gallery-item" data-tags="bath vanity">
+            <div class="ph"></div>
+            <figcaption>Vanity install (placeholder)</figcaption>
+          </figure>
+        </div>
+
+        <p class="muted small" style="margin-top:14px;">
+          Tip: Replace each <code>div.ph</code> with an <code>&lt;img src="assets/yourphoto.jpg"&gt;</code> for real photos.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <img class="footer-logo" src="assets/logo.png" alt="" />
+      <div class="footer-text">
+        <p>Built to help homeowners improve their space with dependable, professional craftsmanship.</p>
+        <p class="muted">© <span id="year"></span> 4G's Services LLC.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
