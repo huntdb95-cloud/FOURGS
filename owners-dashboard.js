@@ -1,7 +1,9 @@
 // Owner Dashboard with Firebase Auth, Firestore, and Storage
 import { auth, db, storage } from './firebase-init.js';
 import { 
-  signInWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut, 
   onAuthStateChanged 
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
@@ -26,14 +28,30 @@ import {
   deleteObject
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
+// Signup passcode (change this to restrict account creation)
+// Set to null or empty string to allow anyone to create accounts
+// NOTE: This is client-side only and not perfect security. For better security,
+// restrict Firestore/Storage write rules to specific UIDs in Firebase Console.
+// Example rule: allow write: if request.auth != null && request.auth.uid == 'YOUR_UID';
+const OWNER_SIGNUP_CODE = 'CHANGE_THIS_PASSCODE';
+
 // UI Elements
 const loginSection = document.getElementById('login-section');
 const dashboardContent = document.getElementById('dashboard-content');
 const loginForm = document.getElementById('login-form');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
-const loginError = document.getElementById('login-error');
+const signupPasscodeInput = document.getElementById('signup-passcode');
+const signupPasscodeRow = document.getElementById('signup-passcode-row');
+const authTitle = document.getElementById('auth-title');
+const authSubmitBtn = document.getElementById('auth-submit-btn');
+const authMsg = document.getElementById('auth-msg');
+const toggleAuthMode = document.getElementById('toggle-auth-mode');
+const forgotPasswordLink = document.getElementById('forgot-password-link');
 const logoutBtn = document.getElementById('logout-btn');
+
+// Auth mode state: 'signin' or 'signup'
+let authMode = 'signin';
 
 // Check auth state
 onAuthStateChanged(auth, (user) => {
@@ -50,30 +68,156 @@ function showLogin() {
 }
 
 function showDashboard() {
+  // Double-check auth before showing dashboard
+  if (!auth.currentUser) {
+    showLogin();
+    return;
+  }
   loginSection.style.display = 'none';
   dashboardContent.style.display = 'block';
   loadDashboard();
 }
 
-// Login
+// Toggle auth mode
+toggleAuthMode.addEventListener('click', (e) => {
+  e.preventDefault();
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  updateAuthUI();
+  clearAuthMsg();
+});
+
+function updateAuthUI() {
+  if (authMode === 'signup') {
+    authTitle.textContent = 'Create Account';
+    authSubmitBtn.textContent = 'Create Account';
+    toggleAuthMode.textContent = 'Already have an account? Sign in';
+    signupPasscodeRow.style.display = OWNER_SIGNUP_CODE ? 'block' : 'none';
+    forgotPasswordLink.style.display = 'none';
+    passwordInput.autocomplete = 'new-password';
+  } else {
+    authTitle.textContent = 'Sign In';
+    authSubmitBtn.textContent = 'Sign In';
+    toggleAuthMode.textContent = "Don't have an account? Create one";
+    signupPasscodeRow.style.display = 'none';
+    forgotPasswordLink.style.display = 'block';
+    passwordInput.autocomplete = 'current-password';
+  }
+}
+
+function clearAuthMsg() {
+  authMsg.textContent = '';
+  authMsg.className = 'auth-msg';
+  authMsg.style.display = 'none';
+}
+
+function showAuthMsg(message, isError = true) {
+  authMsg.textContent = message;
+  authMsg.className = 'auth-msg';
+  authMsg.style.color = isError ? 'rgba(255,100,100,0.9)' : 'rgba(100,255,100,0.9)';
+  authMsg.style.display = 'block';
+}
+
+// Get friendly error message
+function getFriendlyError(error) {
+  const code = error.code || '';
+  const messages = {
+    'auth/invalid-email': 'That email address isn\'t valid.',
+    'auth/user-not-found': 'No account found for that email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/email-already-in-use': 'An account already exists for that email.',
+    'auth/weak-password': 'Password is too weak. Use at least 8 characters.',
+    'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+    'auth/network-request-failed': 'Network error. Please check your connection.'
+  };
+  return messages[code] || error.message || 'An error occurred. Please try again.';
+}
+
+// Validate email format
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Validate password
+function isValidPassword(password) {
+  return password.length >= 8;
+}
+
+// Auth form submit
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
+  const passcode = signupPasscodeInput ? signupPasscodeInput.value.trim() : '';
 
+  // Validation
   if (!email || !password) {
-    loginError.textContent = 'Please enter email and password.';
-    loginError.style.display = 'block';
+    showAuthMsg('Please enter email and password.', true);
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    showAuthMsg('Please enter a valid email address.', true);
+    return;
+  }
+
+  if (!isValidPassword(password)) {
+    showAuthMsg('Password must be at least 8 characters long.', true);
+    return;
+  }
+
+  // Check passcode for signup
+  if (authMode === 'signup' && OWNER_SIGNUP_CODE) {
+    if (!passcode || passcode !== OWNER_SIGNUP_CODE) {
+      showAuthMsg('Invalid passcode. Contact the site owner.', true);
+      return;
+    }
+  }
+
+  // Disable button during request
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = authMode === 'signin' ? 'Signing in...' : 'Creating account...';
+  clearAuthMsg();
+
+  try {
+    if (authMode === 'signin') {
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will handle showing dashboard
+    } else {
+      await createUserWithEmailAndPassword(auth, email, password);
+      showAuthMsg('Account created. You\'re signed in.', false);
+      // onAuthStateChanged will handle showing dashboard
+    }
+  } catch (err) {
+    showAuthMsg(getFriendlyError(err), true);
+  } finally {
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+  }
+});
+
+// Forgot password
+forgotPasswordLink.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = emailInput.value.trim();
+
+  if (!email) {
+    showAuthMsg('Enter your email first.', true);
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    showAuthMsg('Please enter a valid email address.', true);
     return;
   }
 
   try {
-    loginError.style.display = 'none';
-    await signInWithEmailAndPassword(auth, email, password);
-    // onAuthStateChanged will handle showing dashboard
+    forgotPasswordLink.style.pointerEvents = 'none';
+    await sendPasswordResetEmail(auth, email);
+    showAuthMsg('Password reset email sent. Check your inbox.', false);
   } catch (err) {
-    loginError.textContent = err.message || 'Invalid email or password.';
-    loginError.style.display = 'block';
+    showAuthMsg(getFriendlyError(err), true);
+  } finally {
+    forgotPasswordLink.style.pointerEvents = 'auto';
   }
 });
 
@@ -163,6 +307,13 @@ async function loadHeroSlides() {
 }
 
 saveHeroSlidesBtn.addEventListener('click', async () => {
+  // Auth guard
+  if (!auth.currentUser) {
+    heroSlidesStatus.textContent = 'You must be signed in to save hero slides.';
+    heroSlidesStatus.style.color = 'rgba(255,100,100,0.9)';
+    return;
+  }
+
   const files = heroSlideInputs.map(input => input.files[0]).filter(Boolean);
   
   if (files.length !== 5) {
@@ -234,6 +385,13 @@ galleryUpload.addEventListener('change', (e) => {
 });
 
 saveGalleryBtn.addEventListener('click', async () => {
+  // Auth guard
+  if (!auth.currentUser) {
+    galleryStatus.textContent = 'You must be signed in to add gallery images.';
+    galleryStatus.style.color = 'rgba(255,100,100,0.9)';
+    return;
+  }
+
   const files = Array.from(galleryUpload.files);
   
   if (files.length === 0) {
@@ -324,6 +482,13 @@ projectImagesInput.addEventListener('change', (e) => {
 
 projectForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  // Auth guard
+  if (!auth.currentUser) {
+    projectStatus.textContent = 'You must be signed in to create projects.';
+    projectStatus.style.color = 'rgba(255,100,100,0.9)';
+    return;
+  }
 
   const name = projectNameInput.value.trim();
   const lat = parseFloat(projectLatInput.value);
@@ -670,6 +835,13 @@ editProjectAddImages.addEventListener('change', async (e) => {
 editProjectForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  // Auth guard
+  if (!auth.currentUser) {
+    editProjectStatus.textContent = 'You must be signed in to update projects.';
+    editProjectStatus.style.color = 'rgba(255,100,100,0.9)';
+    return;
+  }
+
   const name = editProjectName.value.trim();
   const lat = parseFloat(editProjectLat.value);
   const lng = parseFloat(editProjectLng.value);
@@ -761,6 +933,12 @@ editModal.addEventListener('click', (e) => {
 });
 
 async function deleteProjectConfirm(project) {
+  // Auth guard
+  if (!auth.currentUser) {
+    alert('You must be signed in to delete projects.');
+    return;
+  }
+
   const confirmed = confirm(`Delete project "${project.name}"? This can't be undone.`);
   if (!confirmed) return;
 

@@ -703,6 +703,10 @@ input:focus, textarea:focus{ box-shadow: var(--focus); }
   border-radius: 8px;
   border: 1px solid var(--line);
 }
+.auth-msg{
+  font-size: 0.92rem;
+  margin-top: 8px;
+}
 
 /* Modal */
 .modal-overlay{
