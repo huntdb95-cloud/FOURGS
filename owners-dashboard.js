@@ -336,9 +336,16 @@ saveHeroSlidesBtn.addEventListener('click', async () => {
       });
     }
 
+    // Ensure all hero slides have numeric timestamps (safety check)
+    const normalizedHeroSlides = heroSlides.map(slide => ({
+      url: slide.url,
+      path: slide.path,
+      updatedAt: typeof slide.updatedAt === 'number' ? slide.updatedAt : Date.now()
+    }));
+
     const siteConfigRef = doc(db, 'siteConfig', 'main');
     await setDoc(siteConfigRef, {
-      heroSlides,
+      heroSlides: normalizedHeroSlides, // Use normalized array with only numeric timestamps
       updatedAt: serverTimestamp()
     }, { merge: true });
     
@@ -419,8 +426,15 @@ saveGalleryBtn.addEventListener('click', async () => {
       });
     }
 
+    // Normalize existing gallery items to ensure numeric timestamps
+    const normalizedExisting = (existingGallery || []).map(item => ({
+      url: item.url,
+      path: item.path,
+      createdAt: toMillis(item.createdAt) || Date.now()
+    }));
+
     // Prepend new items (newest first)
-    const updatedGallery = [...newGalleryItems, ...existingGallery];
+    const updatedGallery = [...newGalleryItems, ...normalizedExisting];
 
     await setDoc(siteConfigRef, {
       gallery: updatedGallery,
@@ -541,13 +555,20 @@ projectForm.addEventListener('submit', async (e) => {
       });
     }
 
+    // Ensure all photos have numeric timestamps (safety check)
+    const normalizedPhotos = photos.map(photo => ({
+      url: photo.url,
+      path: photo.path,
+      createdAt: typeof photo.createdAt === 'number' ? photo.createdAt : Date.now()
+    }));
+
     // Save project doc
     const projectRef = doc(db, 'projects', projectId);
     await setDoc(projectRef, {
       name,
       lat,
       lng,
-      photos,
+      photos: normalizedPhotos, // Use normalized array with only numeric timestamps
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
@@ -671,10 +692,16 @@ let editingPhotos = []; // Working copy
 async function openEditModal(project) {
   editingProject = project;
   // Copy photos and normalize timestamps (handle both numeric and Firestore Timestamp objects)
-  editingPhotos = (project.photos || []).map(photo => ({
-    ...photo,
-    createdAt: toMillis(photo.createdAt) || Date.now() // Normalize to numeric timestamp
-  }));
+  // Ensure all createdAt values are numbers, never serverTimestamp() or Timestamp objects
+  editingPhotos = (project.photos || []).map(photo => {
+    const normalized = {
+      url: photo.url,
+      path: photo.path,
+      createdAt: toMillis(photo.createdAt) || Date.now() // Always numeric timestamp
+    };
+    // Preserve any other fields if they exist
+    return normalized;
+  });
 
   editProjectId.value = project.id;
   editProjectName.value = project.name;
@@ -879,13 +906,20 @@ editProjectForm.addEventListener('submit', async (e) => {
     const newPhotoPaths = editingPhotos.map(p => p.path).filter(Boolean);
     const removedPhotoPaths = oldPhotoPaths.filter(path => !newPhotoPaths.includes(path));
 
+    // Ensure all photos have numeric timestamps (safety check)
+    const normalizedPhotos = editingPhotos.map(photo => ({
+      url: photo.url,
+      path: photo.path,
+      createdAt: typeof photo.createdAt === 'number' ? photo.createdAt : Date.now()
+    }));
+
     // Update project doc
     const projectRef = doc(db, 'projects', projectId);
     await updateDoc(projectRef, {
       name,
       lat,
       lng,
-      photos: editingPhotos,
+      photos: normalizedPhotos, // Use normalized array with only numeric timestamps
       updatedAt: serverTimestamp()
     });
 
