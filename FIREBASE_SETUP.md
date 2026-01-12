@@ -22,51 +22,98 @@ This site now uses Firebase (Auth + Firestore + Storage) instead of IndexedDB fo
 5. Click **Add user**
 6. **Save these credentials** - you'll need them to log into the dashboard
 
-### 3. Firestore Security Rules
+### 3. Get Your Owner UID
+
+1. Sign in to the dashboard (`owners-dashboard.html`) with your owner account
+2. Open browser console (F12)
+3. Temporarily add this line to `owners-dashboard.js` after a successful login:
+   ```javascript
+   console.log('Owner UID:', auth.currentUser.uid);
+   ```
+4. Copy the UID that appears in the console
+5. Paste it into:
+   - `owner-config.js` (for reference)
+   - Firestore Rules (step 4)
+   - Storage Rules (step 5)
+6. Remove the console.log after copying
+
+### 4. Firestore Security Rules
 
 1. Go to **Firestore Database** > **Rules**
-2. Replace the rules with:
+2. Replace the rules with (see `FIREBASE_RULES.md` for full details):
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Site config - public read, auth write
-    match /siteConfig/{document} {
-      allow read: if true;
-      allow write: if request.auth != null;
+
+    // CHANGE THIS to your real Owner UID
+    function isOwner() {
+      return request.auth != null
+        && request.auth.uid == "PASTE_OWNER_UID_HERE";
     }
-    // Projects - public read, auth write
+
+    // Site-wide config (hero slides + gallery)
+    match /siteConfig/{docId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // Projects collection
     match /projects/{projectId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isOwner();
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
 ```
 
-3. Click **Publish**
+3. **Important:** Replace `"PASTE_OWNER_UID_HERE"` with your actual owner UID from step 3
+4. Click **Publish**
 
-### 4. Storage Security Rules
+### 5. Storage Security Rules
 
 1. Go to **Storage** > **Rules**
-2. Replace the rules with:
+2. Replace the rules with (see `FIREBASE_RULES.md` for full details):
 
 ```javascript
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+
+    // CHANGE THIS to your real Owner UID
+    function isOwner() {
+      return request.auth != null
+        && request.auth.uid == "PASTE_OWNER_UID_HERE";
+    }
+
+    // Only files under /site are public-read
     match /site/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null
+
+      // Owner-only uploads/replace/delete
+      allow write: if isOwner()
+        // Only images
         && request.resource.contentType.matches('image/.*')
-        && request.resource.size < 10 * 1024 * 1024; // 10MB max
+        // Max size 10 MB
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
 ```
 
-3. Click **Publish**
+3. **Important:** Replace `"PASTE_OWNER_UID_HERE"` with your actual owner UID from step 3
+4. Click **Publish**
 
 ## Data Structure
 
@@ -93,6 +140,13 @@ service firebase.storage {
 - Gallery: `site/gallery/<timestamp>_<filename>`
 - Project photos: `site/projects/<projectId>/<timestamp>_<filename>`
 
+## Security Model
+
+- **Public Read Access**: Anyone can view site content (hero slides, gallery, projects)
+- **Owner-Only Write Access**: Only the specified owner UID can modify content
+- **Account Creation**: Anyone can create a Firebase Auth account, but they cannot write unless they have the owner UID
+- **Image-Only Uploads**: Storage rules restrict uploads to image files only (max 10MB)
+
 ## Testing
 
 1. Open `owners-dashboard.html` in a browser
@@ -100,6 +154,7 @@ service firebase.storage {
 3. Upload hero slides, gallery images, and create a project
 4. Open the public pages (`index.html`, `gallery.html`, `projects.html`) in a different browser/device
 5. Verify that changes made in the dashboard appear on the public pages
+6. **Test Security**: Create a test account (non-owner) and verify it cannot write (should see permission denied errors)
 
 ## Files Changed
 
