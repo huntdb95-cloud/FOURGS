@@ -67,23 +67,68 @@
 
   // Render gallery images
   async function renderGallery(projectId) {
-    const project = projectData[projectId];
-    if (!project) return;
-
     const titleEl = document.getElementById("project-title");
     const subtitleEl = document.getElementById("project-subtitle");
     const galleryGrid = document.getElementById("gallery-grid");
     const emptyState = document.getElementById("empty-state");
+
+    let project = null;
+    let images = [];
+
+    // Try to load from IndexedDB first
+    try {
+      if (typeof getProject === 'function') {
+        const dbProject = await getProject(projectId);
+        if (dbProject) {
+          project = {
+            name: dbProject.name,
+            images: []
+          };
+          
+          // Load images from IndexedDB
+          if (dbProject.imageKeys && dbProject.imageKeys.length > 0) {
+            for (const imageKey of dbProject.imageKeys) {
+              const url = await getImageURL(imageKey);
+              if (url) {
+                images.push(url);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading project from IndexedDB:', err);
+    }
+
+    // Fallback to hardcoded projectData if not found in IndexedDB
+    if (!project) {
+      project = projectData[projectId];
+      if (project) {
+        // Filter existing images from hardcoded paths
+        images = await filterExistingImages(project.images);
+      }
+    }
+
+    if (!project) {
+      // Project not found
+      document.title = "Project Not Found | 4G's Services LLC.";
+      titleEl.textContent = "Project Not Found";
+      subtitleEl.textContent = "The requested project could not be found.";
+      galleryGrid.style.display = "none";
+      emptyState.style.display = "block";
+      emptyState.innerHTML = `
+        <p class="muted">The project you're looking for doesn't exist.</p>
+        <a class="btn btn-primary" href="projects.html" style="margin-top: 16px;">Back to Projects</a>
+      `;
+      return;
+    }
 
     // Update page title
     document.title = `${project.name} | 4G's Services LLC.`;
     titleEl.textContent = project.name;
     subtitleEl.textContent = `Project gallery for ${project.name}`;
 
-    // Filter existing images
-    const existingImages = await filterExistingImages(project.images);
-
-    if (existingImages.length === 0) {
+    if (images.length === 0) {
       // Show empty state
       galleryGrid.style.display = "none";
       emptyState.style.display = "block";
@@ -96,7 +141,7 @@
     galleryGrid.innerHTML = "";
 
     // Render images
-    existingImages.forEach((src, index) => {
+    images.forEach((src, index) => {
       const figure = document.createElement("figure");
       figure.className = "project-gallery-item";
       
@@ -116,11 +161,11 @@
   }
 
   // Initialize gallery page
-  function init() {
+  async function init() {
     const projectId = getProjectId();
 
-    if (!projectId || !isValidProjectId(projectId)) {
-      // Invalid or missing project ID
+    if (!projectId) {
+      // Missing project ID
       const titleEl = document.getElementById("project-title");
       const subtitleEl = document.getElementById("project-subtitle");
       const galleryGrid = document.getElementById("gallery-grid");
@@ -138,9 +183,9 @@
       return;
     }
 
-    // Normalize project ID to lowercase
-    const normalizedId = projectId.toLowerCase();
-    renderGallery(normalizedId);
+    // Try to load from IndexedDB first, then fallback to hardcoded data
+    // Don't validate against hardcoded projectData since IndexedDB projects may have different IDs
+    await renderGallery(projectId);
   }
 
   // Run on page load
