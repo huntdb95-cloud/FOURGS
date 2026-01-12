@@ -539,6 +539,15 @@ input:focus, textarea:focus{ box-shadow: var(--focus); }
   gap: 14px;
   align-items:center;
 }
+.footer-logo-link{
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 180ms var(--ease);
+}
+.footer-logo-link:hover{
+  opacity: 1;
+}
 .footer-logo{
   width: 84px;
   height: auto;
@@ -669,6 +678,98 @@ input:focus, textarea:focus{ box-shadow: var(--focus); }
   .search input{
     width: 100%;
     max-width: 100%;
+  }
+}
+
+/* Owner Dashboard */
+.owner-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.owner-form{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.thumb-grid{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.thumb-grid img{
+  max-width: 150px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+/* Modal */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+.modal-content{
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+.image-thumb-wrapper{
+  position: relative;
+  display: inline-block;
+  margin: 4px;
+}
+.image-thumb-wrapper img{
+  display: block;
+}
+.image-thumb-actions{
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.image-thumb-actions button{
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  background: rgba(11,13,16,0.9);
+  border: 1px solid var(--line);
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.image-thumb-actions button:hover{
+  background: rgba(11,13,16,0.95);
+}
+
+@media (max-width: 720px){
+  .modal-content{
+    max-width: 100%;
+    padding: 16px;
+  }
+  .image-thumb-wrapper{
+    width: 100%;
+    max-width: 150px;
+  }
+  .image-thumb-wrapper img{
+    width: 100%;
+    max-width: 150px;
+  }
+  .image-thumb-actions{
+    position: static;
+    margin-top: 4px;
+    justify-content: flex-start;
   }
 }
 
