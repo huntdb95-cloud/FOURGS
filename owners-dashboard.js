@@ -28,21 +28,12 @@ import {
   deleteObject
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
-// Signup passcode (change this to restrict account creation)
-// Set to null or empty string to allow anyone to create accounts
-// NOTE: This is client-side only and not perfect security. For better security,
-// restrict Firestore/Storage write rules to specific UIDs in Firebase Console.
-// Example rule: allow write: if request.auth != null && request.auth.uid == 'YOUR_UID';
-const OWNER_SIGNUP_CODE = 'CHANGE_THIS_PASSCODE';
-
 // UI Elements
 const loginSection = document.getElementById('login-section');
 const dashboardContent = document.getElementById('dashboard-content');
 const loginForm = document.getElementById('login-form');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
-const signupPasscodeInput = document.getElementById('signup-passcode');
-const signupPasscodeRow = document.getElementById('signup-passcode-row');
 const authTitle = document.getElementById('auth-title');
 const authSubmitBtn = document.getElementById('auth-submit-btn');
 const authMsg = document.getElementById('auth-msg');
@@ -91,14 +82,12 @@ function updateAuthUI() {
     authTitle.textContent = 'Create Account';
     authSubmitBtn.textContent = 'Create Account';
     toggleAuthMode.textContent = 'Already have an account? Sign in';
-    signupPasscodeRow.style.display = OWNER_SIGNUP_CODE ? 'block' : 'none';
     forgotPasswordLink.style.display = 'none';
     passwordInput.autocomplete = 'new-password';
   } else {
     authTitle.textContent = 'Sign In';
     authSubmitBtn.textContent = 'Sign In';
     toggleAuthMode.textContent = "Don't have an account? Create one";
-    signupPasscodeRow.style.display = 'none';
     forgotPasswordLink.style.display = 'block';
     passwordInput.autocomplete = 'current-password';
   }
@@ -147,7 +136,6 @@ loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
-  const passcode = signupPasscodeInput ? signupPasscodeInput.value.trim() : '';
 
   // Validation
   if (!email || !password) {
@@ -163,14 +151,6 @@ loginForm.addEventListener('submit', async (e) => {
   if (!isValidPassword(password)) {
     showAuthMsg('Password must be at least 8 characters long.', true);
     return;
-  }
-
-  // Check passcode for signup
-  if (authMode === 'signup' && OWNER_SIGNUP_CODE) {
-    if (!passcode || passcode !== OWNER_SIGNUP_CODE) {
-      showAuthMsg('Invalid passcode. Contact the site owner.', true);
-      return;
-    }
   }
 
   // Disable button during request
