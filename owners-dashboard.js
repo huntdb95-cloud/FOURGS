@@ -28,6 +28,20 @@ import {
   deleteObject
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
+// Helper to convert timestamps to milliseconds
+// Handles both numeric timestamps and Firestore Timestamp objects
+function toMillis(t) {
+  if (!t) return 0;
+  if (typeof t === 'number') return t;
+  if (typeof t.toMillis === 'function') return t.toMillis();
+  return 0;
+}
+
+// Firestore timestamp rules:
+// ✅ serverTimestamp() is allowed in top-level document fields
+// ❌ NOT allowed inside arrays (even arrays of objects)
+// Use Date.now() for timestamps inside arrays
+
 // UI Elements
 const loginSection = document.getElementById('login-section');
 const dashboardContent = document.getElementById('dashboard-content');
@@ -318,7 +332,7 @@ saveHeroSlidesBtn.addEventListener('click', async () => {
       heroSlides.push({
         url,
         path: storagePath,
-        updatedAt: serverTimestamp()
+        updatedAt: Date.now() // Use Date.now() inside arrays, not serverTimestamp()
       });
     }
 
@@ -401,7 +415,7 @@ saveGalleryBtn.addEventListener('click', async () => {
       newGalleryItems.push({
         url,
         path: storagePath,
-        createdAt: serverTimestamp()
+        createdAt: Date.now() // Use Date.now() inside arrays, not serverTimestamp()
       });
     }
 
@@ -523,7 +537,7 @@ projectForm.addEventListener('submit', async (e) => {
       photos.push({
         url,
         path: storagePath,
-        createdAt: serverTimestamp()
+        createdAt: Date.now() // Use Date.now() inside arrays, not serverTimestamp()
       });
     }
 
@@ -656,7 +670,11 @@ let editingPhotos = []; // Working copy
 
 async function openEditModal(project) {
   editingProject = project;
-  editingPhotos = [...(project.photos || [])];
+  // Copy photos and normalize timestamps (handle both numeric and Firestore Timestamp objects)
+  editingPhotos = (project.photos || []).map(photo => ({
+    ...photo,
+    createdAt: toMillis(photo.createdAt) || Date.now() // Normalize to numeric timestamp
+  }));
 
   editProjectId.value = project.id;
   editProjectName.value = project.name;
@@ -749,7 +767,7 @@ async function replaceEditImage(index, newFile) {
     editingPhotos[index] = {
       url,
       path: storagePath,
-      createdAt: serverTimestamp()
+      createdAt: Date.now() // Use Date.now() inside arrays, not serverTimestamp()
     };
 
     await renderEditImages();
@@ -798,7 +816,7 @@ editProjectAddImages.addEventListener('change', async (e) => {
       editingPhotos.push({
         url,
         path: storagePath,
-        createdAt: serverTimestamp()
+        createdAt: Date.now() // Use Date.now() inside arrays, not serverTimestamp()
       });
     }
 
