@@ -43,7 +43,7 @@
     <section class="section" id="login-section">
       <div class="container">
         <div class="card" style="max-width: 420px; margin: 0 auto;">
-          <h2>Login</h2>
+          <h2 id="auth-title">Sign In</h2>
           <form id="login-form" class="owner-form">
             <div class="form-row">
               <label for="email">Email</label>
@@ -53,8 +53,17 @@
               <label for="password">Password</label>
               <input id="password" type="password" required autocomplete="current-password" />
             </div>
-            <button class="btn btn-primary" type="submit">Sign In</button>
-            <p id="login-error" class="small muted" style="color: rgba(255,100,100,0.9); margin-top: 8px; display: none;"></p>
+            <div class="form-row" id="signup-passcode-row" style="display: none;">
+              <label for="signup-passcode">Create Account Passcode</label>
+              <input id="signup-passcode" type="password" placeholder="Enter passcode to create account" />
+              <p class="small muted">Contact the site owner for the passcode.</p>
+            </div>
+            <button class="btn btn-primary" id="auth-submit-btn" type="submit">Sign In</button>
+            <div class="auth-msg" id="auth-msg" role="status" aria-live="polite" style="margin-top: 8px;"></div>
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <a href="#" id="toggle-auth-mode" class="small muted" style="text-align: center; text-decoration: underline;">Don't have an account? Create one</a>
+              <a href="#" id="forgot-password-link" class="small muted" style="text-align: center; text-decoration: underline; display: none;">Forgot password?</a>
+            </div>
           </form>
         </div>
       </div>
