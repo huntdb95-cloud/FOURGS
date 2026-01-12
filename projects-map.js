@@ -44,13 +44,48 @@ async function initMap() {
     const projectsQuery = query(collection(db, 'projects'), orderBy('updatedAt', 'desc'));
     const snapshot = await getDocs(projectsQuery);
     
+    console.log('Fetched projects:', snapshot.size);
+    
     if (!snapshot.empty) {
-      projects = snapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        name: docSnap.data().name,
-        coords: [docSnap.data().lat, docSnap.data().lng]
-      }));
-      useDefaults = false;
+      // Parse and validate projects from Firestore
+      const validProjects = [];
+      
+      snapshot.docs.forEach(docSnap => {
+        const data = docSnap.data();
+        const name = data.name;
+        const latRaw = data.lat;
+        const lngRaw = data.lng;
+        
+        // Parse coordinates - handle both numbers and strings
+        const latNum = parseFloat(latRaw);
+        const lngNum = parseFloat(lngRaw);
+        
+        // Validate coordinates
+        if (isNaN(latNum) || isNaN(lngNum) || 
+            latNum < -90 || latNum > 90 || 
+            lngNum < -180 || lngNum > 180) {
+          console.warn(`Skipping project ${docSnap.id}: invalid coordinates (lat: ${latRaw}, lng: ${lngRaw})`);
+          return;
+        }
+        
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+          console.warn(`Skipping project ${docSnap.id}: missing or invalid name`);
+          return;
+        }
+        
+        console.log('Project:', docSnap.id, name, latNum, lngNum);
+        
+        validProjects.push({
+          id: docSnap.id,
+          name: name.trim(),
+          coords: [latNum, lngNum]
+        });
+      });
+      
+      if (validProjects.length > 0) {
+        projects = validProjects;
+        useDefaults = false;
+      }
     }
   } catch (err) {
     console.error('Error loading projects from Firebase:', err);
@@ -61,53 +96,71 @@ async function initMap() {
     projects = defaultProjects;
   }
 
-    // Render markers and legend
-    const legendList = document.querySelector('.legend-list');
-    if (legendList) {
-      legendList.innerHTML = '';
-    }
+  // Render markers and legend
+  const legendList = document.querySelector('.legend-list');
+  if (legendList) {
+    legendList.innerHTML = '';
+  }
 
-    projects.forEach(p => {
-      const galleryUrl = `project-gallery.html?project=${p.id}`;
-      
-      const popupContent = `
-        <div style="text-align: center; padding: 4px; min-width: 140px;">
-          <strong style="display: block; margin-bottom: 8px;">${p.name}</strong>
-          <a href="${galleryUrl}" style="display: inline-block; padding: 8px 14px; background: rgba(233,237,242,0.18); border: 1px solid rgba(233,237,242,0.25); border-radius: 8px; color: #eef2f7; text-decoration: none; font-size: 0.9rem; transition: background 180ms; -webkit-tap-highlight-color: rgba(233,237,242,0.3); cursor: pointer;">View Gallery</a>
-        </div>
-      `;
+  const markers = [];
 
-      const marker = L.marker(p.coords, { icon: darkIcon })
-        .addTo(map)
-        .bindPopup(popupContent, {
-          closeOnClick: false,
-          autoClose: false,
-          closeButton: true
-        });
+  projects.forEach(p => {
+    const galleryUrl = `project-gallery.html?project=${p.id}`;
+    
+    const popupContent = `
+      <div style="text-align: center; padding: 4px; min-width: 140px;">
+        <strong style="display: block; margin-bottom: 8px;">${p.name}</strong>
+        <a href="${galleryUrl}" style="display: inline-block; padding: 8px 14px; background: rgba(233,237,242,0.18); border: 1px solid rgba(233,237,242,0.25); border-radius: 8px; color: #eef2f7; text-decoration: none; font-size: 0.9rem; transition: background 180ms; -webkit-tap-highlight-color: rgba(233,237,242,0.3); cursor: pointer;">View Gallery</a>
+      </div>
+    `;
 
-      // Navigate on marker click
-      marker.on('click', function(e) {
-        window.location.href = galleryUrl;
+    const marker = L.marker(p.coords, { icon: darkIcon })
+      .addTo(map)
+      .bindPopup(popupContent, {
+        closeOnClick: false,
+        autoClose: false,
+        closeButton: true
       });
 
-      // Show popup on hover for desktop UX
-      marker.on('mouseover', function() {
-        marker.openPopup();
-      });
+    markers.push(marker);
 
-      // Add to legend
-      if (legendList) {
-        const li = document.createElement('li');
-        li.innerHTML = `<span class="legend-dot"></span> <a href="${galleryUrl}" class="legend-link">${p.name}</a>`;
-        legendList.appendChild(li);
-      }
+    // Navigate on marker click
+    marker.on('click', function(e) {
+      window.location.href = galleryUrl;
     });
-  }
 
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMap);
-  } else {
-    initMap();
+    // Show popup on hover for desktop UX
+    marker.on('mouseover', function() {
+      marker.openPopup();
+    });
+
+    // Add to legend
+    if (legendList) {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="legend-dot"></span> <a href="${galleryUrl}" class="legend-link">${p.name}</a>`;
+      legendList.appendChild(li);
+    }
+  });
+
+  // Fit map viewport to show all markers
+  if (markers.length > 0) {
+    if (markers.length === 1) {
+      // Single marker: set view with reasonable zoom
+      const singleMarker = markers[0];
+      map.setView(singleMarker.getLatLng(), 12);
+    } else {
+      // Multiple markers: fit bounds
+      const bounds = L.latLngBounds(markers.map(m => m.getLatLng()));
+      if (bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.2));
+      }
+    }
   }
-})();
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMap);
+} else {
+  initMap();
+}
