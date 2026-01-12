@@ -1,64 +1,65 @@
 // Projects map initialization with Leaflet
-// Loads projects from IndexedDB with fallback to defaults
+// Loads projects from Firebase Firestore with fallback to defaults
 
-(function() {
-  // Default projects (fallback)
-  const defaultProjects = [
-    { id: "franklin", name: "Franklin, TN", coords: [35.9251, -86.8689] },
-    { id: "antioch", name: "Antioch, TN", coords: [36.0606, -86.6719] },
-    { id: "murfreesboro", name: "Murfreesboro, TN", coords: [35.8456, -86.3903] },
-    { id: "nashville", name: "Nashville, TN", coords: [36.1627, -86.7816] },
-    { id: "smyrna", name: "Smyrna, TN", coords: [35.9828, -86.5186] }
-  ];
+import { db } from './firebase-init.js';
+import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
-  async function initMap() {
-    // Basic Leaflet init
-    const map = L.map('map', { scrollWheelZoom: false }).setView([36.05, -86.78], 9);
+// Default projects (fallback)
+const defaultProjects = [
+  { id: "franklin", name: "Franklin, TN", coords: [35.9251, -86.8689] },
+  { id: "antioch", name: "Antioch, TN", coords: [36.0606, -86.6719] },
+  { id: "murfreesboro", name: "Murfreesboro, TN", coords: [35.8456, -86.3903] },
+  { id: "nashville", name: "Nashville, TN", coords: [36.1627, -86.7816] },
+  { id: "smyrna", name: "Smyrna, TN", coords: [35.9828, -86.5186] }
+];
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+async function initMap() {
+  // Basic Leaflet init
+  const map = L.map('map', { scrollWheelZoom: false }).setView([36.05, -86.78], 9);
 
-    // Dark pin marker via inline SVG
-    const darkPinSvg = encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24">
-        <path fill="#0b0d10" d="M12 2c-3.314 0-6 2.686-6 6c0 4.5 6 14 6 14s6-9.5 6-14c0-3.314-2.686-6-6-6z"/>
-        <circle cx="12" cy="8" r="2.6" fill="#e9edf2"/>
-      </svg>
-    `);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 
-    const darkIcon = L.icon({
-      iconUrl: `data:image/svg+xml,${darkPinSvg}`,
-      iconSize: [34, 34],
-      iconAnchor: [17, 32],
-      popupAnchor: [0, -28]
-    });
+  // Dark pin marker via inline SVG
+  const darkPinSvg = encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24">
+      <path fill="#0b0d10" d="M12 2c-3.314 0-6 2.686-6 6c0 4.5 6 14 6 14s6-9.5 6-14c0-3.314-2.686-6-6-6z"/>
+      <circle cx="12" cy="8" r="2.6" fill="#e9edf2"/>
+    </svg>
+  `);
 
-    // Load projects from IndexedDB
-    let projects = [];
-    let useDefaults = true;
+  const darkIcon = L.icon({
+    iconUrl: `data:image/svg+xml,${darkPinSvg}`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 32],
+    popupAnchor: [0, -28]
+  });
 
-    try {
-      if (typeof getProjects === 'function') {
-        const dbProjects = await getProjects();
-        if (dbProjects && dbProjects.length > 0) {
-          // Use IndexedDB projects, convert to map format
-          projects = dbProjects.map(p => ({
-            id: p.id,
-            name: p.name,
-            coords: [p.lat, p.lng]
-          }));
-          useDefaults = false;
-        }
-      }
-    } catch (err) {
-      console.error('Error loading projects from IndexedDB:', err);
+  // Load projects from Firebase
+  let projects = [];
+  let useDefaults = true;
+
+  try {
+    const projectsQuery = query(collection(db, 'projects'), orderBy('updatedAt', 'desc'));
+    const snapshot = await getDocs(projectsQuery);
+    
+    if (!snapshot.empty) {
+      projects = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        name: docSnap.data().name,
+        coords: [docSnap.data().lat, docSnap.data().lng]
+      }));
+      useDefaults = false;
     }
+  } catch (err) {
+    console.error('Error loading projects from Firebase:', err);
+  }
 
-    // Use defaults if no IndexedDB projects
-    if (useDefaults) {
-      projects = defaultProjects;
-    }
+  // Use defaults if no Firebase projects
+  if (useDefaults) {
+    projects = defaultProjects;
+  }
 
     // Render markers and legend
     const legendList = document.querySelector('.legend-list');

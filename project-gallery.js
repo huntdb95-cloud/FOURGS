@@ -1,113 +1,105 @@
-(function () {
-  // Project data mapping
-  const projectData = {
-    franklin: {
-      name: "Franklin, TN",
-      images: [
-        "assets/projects/franklin/1.jpg",
-        "assets/projects/franklin/2.jpg",
-        "assets/projects/franklin/3.jpg"
-      ]
-    },
-    antioch: {
-      name: "Antioch, TN",
-      images: [
-        "assets/projects/antioch/1.jpg",
-        "assets/projects/antioch/2.jpg"
-      ]
-    },
-    murfreesboro: {
-      name: "Murfreesboro, TN",
-      images: [
-        "assets/projects/murfreesboro/1.jpg"
-      ]
-    },
-    nashville: {
-      name: "Nashville, TN",
-      images: [
-        "assets/projects/nashville/1.jpg"
-      ]
-    },
-    smyrna: {
-      name: "Smyrna, TN",
-      images: [
-        "assets/projects/smyrna/1.jpg"
-      ]
-    }
-  };
+import { db } from './firebase-init.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
-  // Get project ID from URL query parameter
-  function getProjectId() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("project");
+// Project data mapping (fallback for old hardcoded projects)
+const projectData = {
+  franklin: {
+    name: "Franklin, TN",
+    images: [
+      "assets/projects/franklin/1.jpg",
+      "assets/projects/franklin/2.jpg",
+      "assets/projects/franklin/3.jpg"
+    ]
+  },
+  antioch: {
+    name: "Antioch, TN",
+    images: [
+      "assets/projects/antioch/1.jpg",
+      "assets/projects/antioch/2.jpg"
+    ]
+  },
+  murfreesboro: {
+    name: "Murfreesboro, TN",
+    images: [
+      "assets/projects/murfreesboro/1.jpg"
+    ]
+  },
+  nashville: {
+    name: "Nashville, TN",
+    images: [
+      "assets/projects/nashville/1.jpg"
+    ]
+  },
+  smyrna: {
+    name: "Smyrna, TN",
+    images: [
+      "assets/projects/smyrna/1.jpg"
+    ]
   }
+};
 
-  // Validate project ID
-  function isValidProjectId(id) {
-    return id && projectData.hasOwnProperty(id.toLowerCase());
-  }
+// Get project ID from URL query parameter
+function getProjectId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("project");
+}
 
-  // Check if image exists (graceful fallback)
-  function checkImageExists(src) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = src;
-    });
-  }
+// Check if image exists (graceful fallback)
+function checkImageExists(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = src;
+  });
+}
 
-  // Filter out non-existent images
-  async function filterExistingImages(imagePaths) {
-    const checks = await Promise.all(
-      imagePaths.map(path => checkImageExists(path))
-    );
-    return imagePaths.filter((path, index) => checks[index]);
-  }
+// Filter out non-existent images
+async function filterExistingImages(imagePaths) {
+  const checks = await Promise.all(
+    imagePaths.map(path => checkImageExists(path))
+  );
+  return imagePaths.filter((path, index) => checks[index]);
+}
 
-  // Render gallery images
-  async function renderGallery(projectId) {
-    const titleEl = document.getElementById("project-title");
-    const subtitleEl = document.getElementById("project-subtitle");
-    const galleryGrid = document.getElementById("gallery-grid");
-    const emptyState = document.getElementById("empty-state");
+// Render gallery images
+async function renderGallery(projectId) {
+  const titleEl = document.getElementById("project-title");
+  const subtitleEl = document.getElementById("project-subtitle");
+  const galleryGrid = document.getElementById("gallery-grid");
+  const emptyState = document.getElementById("empty-state");
 
-    let project = null;
-    let images = [];
+  let project = null;
+  let images = [];
 
-    // Try to load from IndexedDB first
-    try {
-      if (typeof getProject === 'function') {
-        const dbProject = await getProject(projectId);
-        if (dbProject) {
-          project = {
-            name: dbProject.name,
-            images: []
-          };
-          
-          // Load images from IndexedDB
-          if (dbProject.imageKeys && dbProject.imageKeys.length > 0) {
-            for (const imageKey of dbProject.imageKeys) {
-              const url = await getImageURL(imageKey);
-              if (url) {
-                images.push(url);
-              }
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error loading project from IndexedDB:', err);
-    }
-
-    // Fallback to hardcoded projectData if not found in IndexedDB
-    if (!project) {
-      project = projectData[projectId];
-      if (project) {
-        // Filter existing images from hardcoded paths
-        images = await filterExistingImages(project.images);
+  // Try to load from Firebase first
+  try {
+    const projectRef = doc(db, 'projects', projectId);
+    const projectSnap = await getDoc(projectRef);
+    
+    if (projectSnap.exists()) {
+      const data = projectSnap.data();
+      project = {
+        name: data.name
+      };
+      
+      // Load images from Firebase photos array
+      if (data.photos && Array.isArray(data.photos)) {
+        images = data.photos.map(photo => photo.url).filter(Boolean);
       }
     }
+  } catch (err) {
+    console.error('Error loading project from Firebase:', err);
+  }
+
+  // Fallback to hardcoded projectData if not found in Firebase
+  if (!project) {
+    project = projectData[projectId];
+    if (project) {
+      // Filter existing images from hardcoded paths
+      images = await filterExistingImages(project.images);
+    }
+  }
 
     if (!project) {
       // Project not found
